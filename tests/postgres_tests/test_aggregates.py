@@ -313,7 +313,8 @@ class TestGeneralAggregate(PostgreSQLTestCase):
             StatTestModel(related_field=aggr2, int1=5, int2=0),
         ])
 
-        annotated_queryset = AggregateTestModel.objects.filter(pk__in=[aggr1.pk, aggr2.pk]).annotate(
+        annotated_queryset = AggregateTestModel.objects.filter(
+            pk__in=[aggr1.pk, aggr2.pk]).annotate(
             array=ArrayAgg("stattestmodel__int1", filter=Q(stattestmodel__int2=3))
         )
 
@@ -335,7 +336,8 @@ class TestGeneralAggregate(PostgreSQLTestCase):
             StatTestModel(related_field=aggr2, int1=5, int2=0),
         ])
 
-        annotated_queryset = AggregateTestModel.objects.filter(pk__in=[aggr1.pk, aggr2.pk]).annotate(
+        annotated_queryset = AggregateTestModel.objects.filter(
+            pk__in=[aggr1.pk, aggr2.pk]).annotate(
             array=ArrayAgg("stattestmodel__int1",
                            filter=Q(stattestmodel__int2__in=[]))
 
