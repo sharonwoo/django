@@ -302,6 +302,52 @@ class TestGeneralAggregate(PostgreSQLTestCase):
         )
         self.assertCountEqual(qs, [[], [5]])
 
+    def test_array_agg_with_default_empty_list(self):
+        aggr1 = AggregateTestModel.objects.create(integer_field=1)
+        aggr2 = AggregateTestModel.objects.create(integer_field=2)
+        StatTestModel.objects.bulk_create([
+            StatTestModel(related_field=aggr1, int1=1, int2=0),
+            StatTestModel(related_field=aggr1, int1=2, int2=1),
+            StatTestModel(related_field=aggr2, int1=3, int2=0),
+            StatTestModel(related_field=aggr2, int1=4, int2=1),
+            StatTestModel(related_field=aggr2, int1=5, int2=0),
+        ])
+
+        annotated_queryset = AggregateTestModel.objects.filter(pk__in=[aggr1.pk, aggr2.pk]).annotate(
+            array=ArrayAgg("stattestmodel__int1", filter=Q(stattestmodel__int2=3))
+        )
+
+        result = annotated_queryset.aggregate(
+            aggregated_results=ArrayAgg('array', default=Value([]))
+        )
+
+        expected_result = {'aggregated_results': [[], []]}
+        self.assertEqual(result, expected_result)
+
+    def test_array_agg_with_empty_filter_value(self):
+        aggr1 = AggregateTestModel.objects.create(integer_field=1)
+        aggr2 = AggregateTestModel.objects.create(integer_field=2)
+        StatTestModel.objects.bulk_create([
+            StatTestModel(related_field=aggr1, int1=1, int2=0),
+            StatTestModel(related_field=aggr1, int1=2, int2=1),
+            StatTestModel(related_field=aggr2, int1=3, int2=0),
+            StatTestModel(related_field=aggr2, int1=4, int2=1),
+            StatTestModel(related_field=aggr2, int1=5, int2=0),
+        ])
+
+        annotated_queryset = AggregateTestModel.objects.filter(pk__in=[aggr1.pk, aggr2.pk]).annotate(
+            array=ArrayAgg("stattestmodel__int1",
+                           filter=Q(stattestmodel__int2__in=[]))
+
+        )
+
+        result = annotated_queryset.aggregate(
+            aggregated_results=ArrayAgg('array', default=Value([]))
+        )
+
+        expected_result = {'aggregated_results': [[], []]}
+        self.assertEqual(result, expected_result)
+
     def test_bit_and_general(self):
         values = AggregateTestModel.objects.filter(integer_field__in=[0, 1]).aggregate(
             bitand=BitAnd("integer_field")
