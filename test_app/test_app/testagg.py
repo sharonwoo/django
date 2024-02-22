@@ -1,12 +1,4 @@
-# testagg.py
-"""
-python manage.py makemigrations
-python manage.py migrate
-"""
-
-import os
-
-import django
+import os, django
 
 
 def main():
@@ -15,7 +7,7 @@ def main():
 
     django.setup()
 
-    from test_model_app.models import MyModel, MyOtherModel, MyEmptyModel, MyOtherEmptyModel
+    from test_model_app.models import MyModel, MyOtherModel, MyEmptyModel
 
     from django.contrib.postgres.aggregates import ArrayAgg
     from django.db.models import Q, Value
@@ -36,16 +28,18 @@ def main():
         MyOtherModel.objects.create(mymodel=my_model_instance)
 
     print("models without data always return None: ")
+
     print(MyEmptyModel.objects.annotate(
         annotated_ids=ArrayAgg(
             "myotheremptymodel__id",
             filter=Q(
-                myotheremptymodel__id__in=[],
+                pk__in=[],
             ),
             default=Value([]),
         )
     ).first(), '[] Value([])')
 
+    print("")
     print("models with data: ")
 
     for filter_value in ([], [-1]):
