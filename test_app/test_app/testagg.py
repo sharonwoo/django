@@ -15,7 +15,7 @@ def main():
 
     django.setup()
 
-    from test_model_app.models import MyModel, MyOtherModel
+    from test_model_app.models import MyModel, MyOtherModel, MyEmptyModel, MyOtherEmptyModel
 
     from django.contrib.postgres.aggregates import ArrayAgg
     from django.db.models import Q, Value
@@ -34,6 +34,19 @@ def main():
     if not MyOtherModel.objects.exists():
         my_model_instance = MyModel.objects.first()
         MyOtherModel.objects.create(mymodel=my_model_instance)
+
+    print("models without data always return None: ")
+    print(MyEmptyModel.objects.annotate(
+        annotated_ids=ArrayAgg(
+            "myotheremptymodel__id",
+            filter=Q(
+                myotheremptymodel__id__in=[],
+            ),
+            default=Value([]),
+        )
+    ).first(), '[] Value([])')
+
+    print("models with data: ")
 
     for filter_value in ([], [-1]):
         for test_default in ([], Value([])):
