@@ -1,0 +1,4 @@
+[flake8]
+exclude =
+    test_app/*
+    test_model_app/*
