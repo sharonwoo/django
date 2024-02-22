@@ -15,14 +15,29 @@ def main():
 
     django.setup()
 
-    from test_model_app.models import MyModel
+    from test_model_app.models import MyModel, MyOtherModel
 
     from django.contrib.postgres.aggregates import ArrayAgg
     from django.db.models import Q, Value
 
+    """
+    create one-off my model and other model data fields per
+    https://code.djangoproject.com/ticket/35235#comment:8
+
+    if there is no data, get None back for result
+    can look at setUpTestData in test_aggregates.py
+    """
+
+    if not MyModel.objects.exists():
+        MyModel.objects.create()
+
+    if not MyOtherModel.objects.exists():
+        my_model_instance = MyModel.objects.first()
+        MyOtherModel.objects.create(mymodel=my_model_instance)
+
     for filter_value in ([], [-1]):
         for test_default in ([], Value([])):
-            annotated_queryset = MyModel.objects.annotate(
+            result = MyModel.objects.annotate(
                 annotated_ids=ArrayAgg(
                     "myothermodel__id",
                     filter=Q(
@@ -30,9 +45,15 @@ def main():
                     ),
                     default=test_default,
                 )
-            )
-            result = annotated_queryset.first()
+            ).first().annotated_ids
             print(result, filter_value, test_default)
+
+    """ prints:
+        [] [] []
+        {} [] Value([])
+        [] [-1] []
+        [] [-1] Value([])
+    """
 
 
 if __name__ == "__main__":
